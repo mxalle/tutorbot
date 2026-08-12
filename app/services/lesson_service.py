@@ -4,6 +4,7 @@ from decimal import Decimal
 import pytz
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.models import Lesson, LessonStatus, Payment, Student
 from app.utils.time import get_next_lesson_datetime
@@ -67,6 +68,7 @@ async def get_today_lessons(session: AsyncSession, tutor_id: int) -> list[Lesson
                 Lesson.status == LessonStatus.SCHEDULED,
             )
         )
+        .options(selectinload(Lesson.student))
         .order_by(Lesson.lesson_datetime)
     )
     return list(result.scalars().all())
@@ -101,7 +103,11 @@ async def get_debts(session: AsyncSession, tutor_id: int) -> list[tuple[Student,
 
 
 async def mark_lesson_completed(session: AsyncSession, lesson_id: int, is_paid: bool) -> None:
-    result = await session.execute(select(Lesson).where(Lesson.id == lesson_id))
+    result = await session.execute(
+        select(Lesson)
+        .where(Lesson.id == lesson_id)
+        .options(selectinload(Lesson.student))
+    )
     lesson = result.scalar_one_or_none()
     if lesson is None:
         return
