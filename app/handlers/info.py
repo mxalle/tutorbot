@@ -45,6 +45,7 @@ async def show_debts(message: types.Message, session: AsyncSession) -> None:
 
 
 @router.message(Command("plan"))
+@router.message(F.text == "📅 План на сегодня")
 async def show_plan(message: types.Message, session: AsyncSession) -> None:
     lessons = await get_today_lessons(session, message.from_user.id)
     if not lessons:

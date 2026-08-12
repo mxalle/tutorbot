@@ -1,6 +1,5 @@
-from aiogram import F, Router, types
+from aiogram import Router, types
 from aiogram.filters import Command
-from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.keyboards import get_main_menu_keyboard
@@ -21,8 +20,3 @@ async def cmd_start(message: types.Message, session: AsyncSession) -> None:
         "Привет! Я бот для репетиторов. Здесь можно вести учеников, занятия и долги.",
         reply_markup=get_main_menu_keyboard(),
     )
-
-
-@router.message(F.text == "📅 План на сегодня")
-async def today_plan_button(message: types.Message) -> None:
-    await message.answer("Используйте команду /plan")
