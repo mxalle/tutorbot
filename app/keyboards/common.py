@@ -22,6 +22,17 @@ def get_confirm_keyboard(prefix: str = "confirm") -> InlineKeyboardMarkup:
     )
 
 
+def get_add_more_schedule_keyboard(prefix: str = "schedule") -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="➕ Добавить ещё", callback_data=f"{prefix}:more"),
+                InlineKeyboardButton(text="✅ Готово", callback_data=f"{prefix}:done"),
+            ]
+        ]
+    )
+
+
 def get_main_menu_keyboard() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[

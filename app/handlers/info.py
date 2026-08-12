@@ -9,6 +9,15 @@ from app.utils.time import get_weekday_name
 router = Router()
 
 
+def format_schedules(schedules: list) -> str:
+    if not schedules:
+        return "нет расписания"
+    return ", ".join(
+        f"{get_weekday_name(s.weekday)} {s.lesson_time.strftime('%H:%M')}"
+        for s in schedules
+    )
+
+
 @router.message(Command("students"))
 @router.message(F.text == "📋 Список учеников")
 async def list_students(message: types.Message, session: AsyncSession) -> None:
@@ -20,8 +29,7 @@ async def list_students(message: types.Message, session: AsyncSession) -> None:
     lines = []
     for index, student in enumerate(students, 1):
         lines.append(
-            f"{index}. <b>{student.name}</b> — {student.price}₽, "
-            f"{get_weekday_name(student.weekday)} в {student.lesson_time.strftime('%H:%M')}"
+            f"{index}. <b>{student.name}</b> — {student.price} ₽, {format_schedules(student.schedules)}"
         )
     await message.answer("\n".join(lines), parse_mode="HTML")
 
@@ -37,10 +45,10 @@ async def show_debts(message: types.Message, session: AsyncSession) -> None:
     lines = ["<b>Долги учеников:</b>\n"]
     total = 0
     for student, count, amount in debts:
-        lines.append(f"• {student.name}: {count} занятий — {amount}₽")
+        lines.append(f"• {student.name}: {count} занятий — {amount} ₽")
         total += amount
 
-    lines.append(f"\n<b>Итого:</b> {total}₽")
+    lines.append(f"\n<b>Итого:</b> {total} ₽")
     await message.answer("\n".join(lines), parse_mode="HTML")
 
 
@@ -56,6 +64,6 @@ async def show_plan(message: types.Message, session: AsyncSession) -> None:
     for lesson in lessons:
         lines.append(
             f"• {lesson.lesson_datetime.strftime('%H:%M')} — {lesson.student.name} "
-            f"({lesson.student.price}₽)"
+            f"({lesson.student.price} ₽)"
         )
     await message.answer("\n".join(lines), parse_mode="HTML")

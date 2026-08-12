@@ -9,6 +9,7 @@ from app.config import settings
 from app.database import init_db
 from app.handlers import add_student, common, info, lesson_callback
 from app.middlewares.db_session import DbSessionMiddleware
+from app.middlewares.user_middleware import UserMiddleware
 from app.scheduler.jobs import ask_after_lesson_job, daily_plan_job, remind_before_lesson_job, schedule_lessons_job
 
 logging.basicConfig(level=logging.INFO)
@@ -22,6 +23,8 @@ async def main() -> None:
     dp = Dispatcher(storage=MemoryStorage())
     dp.message.middleware(DbSessionMiddleware())
     dp.callback_query.middleware(DbSessionMiddleware())
+    dp.message.middleware(UserMiddleware())
+    dp.callback_query.middleware(UserMiddleware())
 
     dp.include_router(common.router)
     dp.include_router(add_student.router)
