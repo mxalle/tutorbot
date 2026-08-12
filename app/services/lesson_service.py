@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 from decimal import Decimal
 
 import pytz
@@ -17,7 +17,8 @@ async def create_weekly_lessons(session: AsyncSession, look_ahead_weeks: int = 4
 
     for student in students:
         tz = pytz.timezone(student.timezone)
-        now = datetime.now(tz)
+        now = datetime.utcnow()
+        today_utc = now.date()
         last_lesson_result = await session.execute(
             select(Lesson)
             .where(Lesson.student_id == student.id)
@@ -27,14 +28,14 @@ async def create_weekly_lessons(session: AsyncSession, look_ahead_weeks: int = 4
         last_lesson = last_lesson_result.scalar_one_or_none()
 
         if last_lesson is None:
-            start_date = now.date()
+            start_date = today_utc
         else:
             start_date = last_lesson.lesson_date + timedelta(days=1)
 
         current_week_start = start_date - timedelta(days=start_date.weekday())
         for week in range(look_ahead_weeks):
             lesson_date = current_week_start + timedelta(days=student.weekday, weeks=week)
-            if lesson_date < now.date():
+            if lesson_date < today_utc:
                 continue
 
             exists_result = await session.execute(
@@ -45,7 +46,8 @@ async def create_weekly_lessons(session: AsyncSession, look_ahead_weeks: int = 4
             if exists_result.scalar_one_or_none():
                 continue
 
-            lesson_datetime = tz.localize(datetime.combine(lesson_date, student.lesson_time))
+            local_dt = tz.localize(datetime.combine(lesson_date, student.lesson_time))
+            lesson_datetime = local_dt.astimezone(pytz.utc).replace(tzinfo=None)
             lesson = Lesson(
                 student_id=student.id,
                 lesson_date=lesson_date,
@@ -58,13 +60,14 @@ async def create_weekly_lessons(session: AsyncSession, look_ahead_weeks: int = 4
 
 
 async def get_today_lessons(session: AsyncSession, tutor_id: int) -> list[Lesson]:
+    today = datetime.utcnow().date()
     result = await session.execute(
         select(Lesson)
         .join(Student)
         .where(
             and_(
                 Student.tutor_id == tutor_id,
-                Lesson.lesson_date == date.today(),
+                Lesson.lesson_date == today,
                 Lesson.status == LessonStatus.SCHEDULED,
             )
         )

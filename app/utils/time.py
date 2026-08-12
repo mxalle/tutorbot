@@ -39,7 +39,7 @@ def get_weekday_name(weekday: int) -> str:
 
 
 def get_next_lesson_datetime(weekday: int, lesson_time: time, timezone: str) -> datetime:
-    """Возвращает ближайшую дату-время занятия в заданном часовом поясе."""
+    """Возвращает ближайшую дату-время занятия в UTC (naive)."""
     tz = pytz.timezone(timezone)
     now = datetime.now(tz)
     today = now.date()
@@ -47,4 +47,5 @@ def get_next_lesson_datetime(weekday: int, lesson_time: time, timezone: str) -> 
     if days_ahead < 0 or (days_ahead == 0 and now.time() > lesson_time):
         days_ahead += 7
     lesson_date = today + timedelta(days=days_ahead)
-    return tz.localize(datetime.combine(lesson_date, lesson_time))
+    local_dt = tz.localize(datetime.combine(lesson_date, lesson_time))
+    return local_dt.astimezone(pytz.utc).replace(tzinfo=None)
